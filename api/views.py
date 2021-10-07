@@ -4,6 +4,6 @@ from .models import Board
 from .serializers import BoardSerializer
 
 # Create your views here.
-class BoardView(generics.CreateAPIView):
+class BoardView(generics.ListAPIView):
     queryset = Board.objects.all()
     serializer_class = BoardSerializer
