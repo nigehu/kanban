@@ -2,7 +2,7 @@ const path = require("path");
 const webpack = require("webpack");
 
 module.exports = {
-  entry: "./src/index.js",
+  entry: ["./src/index.tsx", "webpack-hot-middleware/client"],
   output: {
     path: path.resolve(__dirname, "./static/frontend"),
     filename: "[name].js",
@@ -10,14 +10,18 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.tsx$/,
+        test: /\.(ts|tsx)$/,
         exclude: /node_modules/,
-        use: {
-          loader: "babel-loader",
-        },
+        loader: "ts-loader",
+      },
+      { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
+      {
+        test: /\.css$/,
+        use: ["style-loader", "css-loader"],
       },
     ],
   },
+  devtool: "source-map",
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
   },
@@ -31,5 +35,6 @@ module.exports = {
         NODE_ENV: JSON.stringify("production"),
       },
     }),
+    new webpack.HotModuleReplacementPlugin(),
   ],
 };

@@ -1,23 +1,14 @@
 {
   "compilerOptions": {
+    "outDir": "./static/frontend",
+    "noImplicitAny": true,
+    "module": "es6",
     "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "jsx": "react",
     "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
     "moduleResolution": "node",
-    "experimentalDecorators": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "noFallthroughCasesInSwitch": true
+    "allowSyntheticDefaultImports": true,
+    "noEmit": false
   },
   "include": ["src/*"],
   "exclude": ["node_modules"]
