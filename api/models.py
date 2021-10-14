@@ -15,3 +15,10 @@ class Post(models.Model):
     description = models.CharField(max_length=1000, default="", unique=True)
     created = models.DateTimeField(auto_now_add=True)
     user = models.CharField(max_length=50, default="", unique=True)
+
+class User(models.Model):
+    session_id = models.CharField(max_length=100, default="")
+    username = models.CharField(max_length=100, default="", unique=True)
+    first_name = models.CharField(max_length=100, default="")
+    last_name = models.CharField(max_length=100, default="")
+    created = models.DateTimeField(auto_now_add=True)

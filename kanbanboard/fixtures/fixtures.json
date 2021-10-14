@@ -1,0 +1,57 @@
+[
+  {
+    "model": "api.user",
+    "pk": 1,
+    "fields": {
+      "session_id": "",
+      "username": "cdickens",
+      "first_name": "Charles",
+      "last_name": "Dickens",
+      "created": "2021-10-01T12:00:00-09"
+    }
+  },
+  {
+    "model": "api.user",
+    "pk": 2,
+    "fields": {
+      "session_id": "",
+      "username": "ehemmingway",
+      "first_name": "Ernest",
+      "last_name": "Hemmingway",
+      "created": "2021-10-01T12:00:00-09"
+    }
+  },
+  {
+    "model": "api.user",
+    "pk": 3,
+    "fields": {
+      "session_id": "",
+      "username": "jausten",
+      "first_name": "Jane",
+      "last_name": "Austen",
+      "created": "2021-10-01T12:00:00-09"
+    }
+  },
+  {
+    "model": "api.user",
+    "pk": 4,
+    "fields": {
+      "session_id": "",
+      "username": "vwoolf",
+      "first_name": "Virginia",
+      "last_name": "Woolf",
+      "created": "2021-10-01T12:00:00-09"
+    }
+  },
+  {
+    "model": "api.user",
+    "pk": 5,
+    "fields": {
+      "session_id": "",
+      "username": "jjoyce",
+      "first_name": "James",
+      "last_name": "Joyce",
+      "created": "2021-10-01T12:00:00-09"
+    }
+  }
+]

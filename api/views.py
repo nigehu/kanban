@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics, serializers, status
-from .models import Board, Post
-from .serializers import BoardSerializer, CreateBoardSerializer, CreatePosterializer
+from .models import Board, Post, User
+from .serializers import BoardSerializer, CreateBoardSerializer, CreatePosterializer, UserSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -24,6 +24,30 @@ class CreateBoardView(APIView):
             board.save()
         
             return Response(BoardSerializer(board).data, status=status.HTTP_201_CREATED)
+
+class UserView(APIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def get(self, request, format=None):
+        username = request.GET.get('username',None)
+        # session_id = request.GET.get('session_id',None)
+        if username:
+            user = User.objects.filter(username=username)
+            if len(user) > 0:
+                return Response(UserSerializer(user[0]).data, status=status.HTTP_200_OK)
+            return Response({'User Not Found': 'Invalid Username'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'Bad Request': 'Username parameter not found in request'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def post(self, request, format=None):
+        serializer = self.serializer_class(data=request.data)
+        
+        
+
+
+
+
+
 
 # Beginnings of api view for Posts
 """

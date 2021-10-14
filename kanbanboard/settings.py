@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_DIR = os.path.join(BASE_DIR, "kanbanboard")
 
 # Add .env variables anywhere before SECRET_KEY
 dotenv_file = os.path.join(BASE_DIR, ".env")
@@ -136,3 +137,7 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+FIXTURE_DIRS = (
+   os.path.join(PROJECT_DIR, 'fixtures'),
+)
