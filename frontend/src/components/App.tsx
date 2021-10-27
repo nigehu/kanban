@@ -11,16 +11,22 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import { Route, Switch, useHistory } from "react-router-dom";
+import { Route, Switch, useHistory, useLocation } from "react-router-dom";
 import HomePage from "./home/HomePage";
 import KanbanBoard from "./kanban/KanbanBoard";
 import Login from "./Login";
+import Users from "./Users";
 import { IUser } from "../interfaces/IUser";
 
 function App() {
+  const location = useLocation();
   const history = useHistory();
   const [selectedTab, setSelectedTab] = useState("/");
   const [me, setMe] = useState<IUser>();
+
+  useEffect(() => {
+    setSelectedTab(location.pathname);
+  }, [location.pathname]);
 
   function a11yProps(tabGroup: string, id: string) {
     return {
@@ -30,7 +36,6 @@ function App() {
   }
 
   function handleTabChange(value: string) {
-    setSelectedTab(value);
     history.push(value);
   }
 
@@ -70,7 +75,7 @@ function App() {
             <KanbanBoard />
           </Route>
           <Route path="/users">
-            <p>test</p>
+            <Users />
           </Route>
           <Route path="*">
             <h1>Yikes! No page found here...</h1>
