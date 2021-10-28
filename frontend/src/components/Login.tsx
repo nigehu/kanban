@@ -30,7 +30,7 @@ function Login({ me, setMe, children }: ILogin) {
     const fetchData = async () => {
       const sessionId = localStorage.getItem("session_id");
       if (sessionId) {
-        fetch(`/api/user?session_id=${sessionId}`).then(async (response) => {
+        fetch(`/api/user/session/${sessionId}`).then(async (response) => {
           if (response.status === 401 || response.status === 204) {
             return;
           }
@@ -57,7 +57,7 @@ function Login({ me, setMe, children }: ILogin) {
 
   const signIn = () => {
     setLoading(true);
-    fetch(`/api/user?username=${username}`).then(async (response) => {
+    fetch(`/api/user/?username=${username}`).then(async (response) => {
       if (response.status === 401 || response.status === 204) {
         return;
       }
@@ -87,7 +87,7 @@ function Login({ me, setMe, children }: ILogin) {
       first_name: firstName,
       last_name: lastName,
     };
-    fetch(`/api/user`, {
+    fetch(`/api/user/`, {
       method: "POST",
       headers: {
         Accept: "application/json",
