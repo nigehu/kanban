@@ -68,3 +68,15 @@ class UserViewSet(viewsets.ViewSet):
         if len(user) > 0:
             return Response(UserSerializer(user[0]).data)
         return Response({'User Not Found': 'Invalid Session Id'}, status=status.HTTP_404_NOT_FOUND)
+
+class BoardViewSet(viewsets.ViewSet):
+    """
+    A viewset for viewing and editing board instances.
+    """
+    serializer_class = BoardSerializer
+    queryset = Board.objects.all()
+
+    def list(self, request):
+        queryset = Board.objects.all()
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)

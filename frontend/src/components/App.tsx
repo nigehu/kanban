@@ -25,7 +25,9 @@ function App() {
   const [me, setMe] = useState<IUser>();
 
   useEffect(() => {
-    setSelectedTab(location.pathname);
+    const path = location.pathname.replace(/\d+/g, "");
+    console.log(path);
+    setSelectedTab(path);
   }, [location.pathname]);
 
   function a11yProps(tabGroup: string, id: string) {
@@ -52,10 +54,10 @@ function App() {
             aria-label="navigation tabs"
           >
             <Tab label="home" value="/" {...a11yProps("nav", "home")} />
-            <Tab label="users" value="/users" {...a11yProps("nav", "users")} />
+            <Tab label="users" value="/users/" {...a11yProps("nav", "users")} />
             <Tab
               label="kanban"
-              value="/kanban"
+              value="/kanban/"
               {...a11yProps("nav", "kanban")}
             />
           </Tabs>
@@ -78,7 +80,7 @@ function App() {
             <Route exact path="/">
               <HomePage />
             </Route>
-            <Route path="/kanban">
+            <Route path="/kanban/:id">
               <KanbanBoard />
             </Route>
             <Route path="/users">
