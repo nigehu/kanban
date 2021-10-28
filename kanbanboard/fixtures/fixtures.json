@@ -53,5 +53,13 @@
       "last_name": "Joyce",
       "created": "2021-10-01T12:00:00-09"
     }
+  },
+  {
+    "model": "api.board",
+    "pk": 1,
+    "fields": {
+      "name": "Board Numero Un",
+      "user": 1
+    }
   }
 ]

@@ -67,20 +67,28 @@ function App() {
         </Box>
       </Box>
       <Login me={me} setMe={setMe}>
-        <Switch>
-          <Route exact path="/">
-            <HomePage />
-          </Route>
-          <Route path="/kanban">
-            <KanbanBoard />
-          </Route>
-          <Route path="/users">
-            <Users />
-          </Route>
-          <Route path="*">
-            <h1>Yikes! No page found here...</h1>
-          </Route>
-        </Switch>
+        <Box
+          sx={{
+            backgroundColor: "#EEEEEE",
+            height: "calc(100vh - 50px)",
+            p: 2,
+          }}
+        >
+          <Switch>
+            <Route exact path="/">
+              <HomePage />
+            </Route>
+            <Route path="/kanban">
+              <KanbanBoard />
+            </Route>
+            <Route path="/users">
+              <Users />
+            </Route>
+            <Route path="*">
+              <h1>Yikes! No page found here...</h1>
+            </Route>
+          </Switch>
+        </Box>
       </Login>
     </div>
   );

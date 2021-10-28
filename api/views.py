@@ -8,8 +8,14 @@ from rest_framework.response import Response
 
 # Create your views here.
 class BoardView(generics.ListAPIView):
-    queryset = Board.objects.all()
-    serializer_class = BoardSerializer
+    lookup_url_kwarg = "board_id"
+    # GET: api/board/5
+    def get(self, request, format=None):
+        uid = self.kwargs.get(self.lookup_url_kwarg)
+        if uid == None:
+            queryset = Board.objects.all()
+            return Response(BoardSerializer(queryset).data, status=status.HTTP_200_OK)
+
 
 class CreateBoardView(APIView):
     serializer_class = CreateBoardSerializer
@@ -25,8 +31,9 @@ class CreateBoardView(APIView):
         
             return Response(BoardSerializer(board).data, status=status.HTTP_201_CREATED)
 
-class UserView(APIView):
 
+class UserView(APIView):
+    # GET: api/user
     def get(self, request, format=None):
         session_id = request.GET.get('session_id',None)
         if session_id:
@@ -53,6 +60,7 @@ class UserView(APIView):
                 return Response({'User Not Found': 'Invalid Username'}, status=status.HTTP_404_NOT_FOUND)
         return Response({'Bad Request': 'No parameters found in request'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # POST: api/user
     def post(self, request, format=None):
 
         try:
