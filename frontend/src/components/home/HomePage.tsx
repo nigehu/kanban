@@ -49,7 +49,7 @@ export default function HomePage() {
   };
 
   return (
-    <Paper sx={{ p: 2 }}>
+    <>
       <Typography variant="h3">Home Page</Typography>
       <Table>
         <TableHead>
@@ -73,6 +73,6 @@ export default function HomePage() {
           ))}
         </TableBody>
       </Table>
-    </Paper>
+    </>
   );
 }

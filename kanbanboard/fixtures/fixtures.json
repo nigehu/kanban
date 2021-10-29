@@ -61,5 +61,53 @@
       "name": "Board Numero Un",
       "user": 1
     }
+  },
+  {
+    "model": "api.column",
+    "pk": 1,
+    "fields": {
+      "name": "TODO",
+      "position": 0,
+      "board": 1
+    }
+  },
+  {
+    "model": "api.post",
+    "pk": 1,
+    "fields": {
+      "title": "Complete Kanban Board",
+      "position": 0,
+      "description": "The kanban board has yet to be completed and will need at a minimum 40 hours of work to complete. We will need to allocate several different people in order to complete before the due date otherwise we will have to answer questions to the board of directors.",
+      "created": "2021-10-01T12:00:00-09",
+      "due_date": "2021-11-01T12:00:00-09",
+      "column": 1,
+      "assigned": 1
+    }
+  },
+  {
+    "model": "api.post",
+    "pk": 2,
+    "fields": {
+      "title": "Test Kanban Board",
+      "position": 1,
+      "description": "Kanban board will need to be thoroughly tested prior to release",
+      "created": "2021-10-01T12:00:00-09",
+      "due_date": "2021-11-01T12:00:00-09",
+      "column": 1,
+      "assigned": 3
+    }
+  },
+  {
+    "model": "api.post",
+    "pk": 3,
+    "fields": {
+      "title": "Determine deployment strategy",
+      "position": 2,
+      "description": "Kanban board will need to be hosted somewhere and the way that it is hosted will need to be figured out.",
+      "created": "2021-10-01T12:00:00-09",
+      "due_date": "2021-11-01T12:00:00-09",
+      "column": 1,
+      "assigned": 4
+    }
   }
 ]

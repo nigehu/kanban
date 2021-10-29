@@ -1,12 +1,14 @@
-import { Typography } from "@mui/material";
+import { Typography, Paper } from "@mui/material";
 import { Box } from "@mui/system";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   DragDropContext,
   DropResult,
   Droppable,
   Draggable,
 } from "react-beautiful-dnd";
+import { useParams } from "react-router-dom";
+import IBoard from "../../interfaces/IBoard";
 
 interface IItem {
   id: number;
@@ -14,15 +16,50 @@ interface IItem {
   position: number;
 }
 
+interface IParam {
+  id?: string;
+}
+
+const testList: IItem[] = [
+  { id: 6, text: "Id 6", position: 0 },
+  { id: 1, text: "Id 1", position: 1 },
+  { id: 2, text: "Id 2", position: 2 },
+  { id: 3, text: "Id 3", position: 3 },
+  { id: 4, text: "Id 4", position: 4 },
+  { id: 5, text: "Id 5", position: 5 },
+];
+
 export default function KanbanBoard() {
-  const [list, setList] = useState<IItem[]>([
-    { id: 6, text: "Id 6", position: 0 },
-    { id: 1, text: "Id 1", position: 1 },
-    { id: 2, text: "Id 2", position: 2 },
-    { id: 3, text: "Id 3", position: 3 },
-    { id: 4, text: "Id 4", position: 4 },
-    { id: 5, text: "Id 5", position: 5 },
-  ]);
+  let { id } = useParams<IParam>();
+  const [list, setList] = useState<IItem[]>(testList);
+  const [board, setBoard] = useState<IBoard | undefined>();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      fetch(`/api/board/${id}`).then(async (response) => {
+        if (response.status === 401 || response.status === 204) {
+          return;
+        }
+        try {
+          const data: IBoard | undefined = await response.json();
+          if (response.ok && data) {
+            setBoard(data);
+            setLoading(false);
+          } else {
+            return Promise.reject(data);
+          }
+        } catch (err) {
+          console.error(err);
+          if (response.ok) {
+            return true;
+          }
+        }
+      });
+    };
+
+    fetchData();
+  }, []);
 
   function onDragEnd({ destination, source }: DropResult) {
     if (destination && destination.index !== source.index) {
@@ -61,49 +98,87 @@ export default function KanbanBoard() {
     }
   }
 
+  if (!board) return null;
+
   return (
-    <div>
-      <h1>KANBAN!</h1>
+    <>
+      <h1>{board.name}</h1>
       <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable type="FIELD" droppableId="FIELD">
-          {(provided, _) => (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              {list.map((item, index) => {
-                return (
-                  <Draggable
-                    key={item.id}
-                    draggableId={item.id.toString()}
-                    index={index}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        ref={provided.innerRef}
-                      >
-                        <Box
-                          sx={{
-                            width: 200,
-                            height: 30,
-                            p: 1,
-                            m: 1,
-                            backgroundColor: "pink",
-                            border: "solid grey 1px",
-                          }}
-                        >
-                          <Typography>{item.text}</Typography>
-                        </Box>
-                      </div>
-                    )}
-                  </Draggable>
-                );
-              })}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
+        {board.columns &&
+          board.columns.map((column) => {
+            return (
+              <>
+                <Typography>{column.name}</Typography>
+                <Droppable type="FIELD" droppableId="FIELD">
+                  {(provided, _) => (
+                    <div ref={provided.innerRef} {...provided.droppableProps}>
+                      {column.posts.map((post, index) => {
+                        return (
+                          <Draggable
+                            key={post.id}
+                            draggableId={post.id.toString()}
+                            index={index}
+                          >
+                            {(provided, snapshot) => (
+                              <div
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                ref={provided.innerRef}
+                              >
+                                <Box
+                                  sx={{
+                                    width: 200,
+                                    p: 1,
+                                    m: 1,
+                                    backgroundColor: "pink",
+                                    border: "solid grey 1px",
+                                  }}
+                                >
+                                  <Typography variant="subtitle1">
+                                    {post.title}
+                                  </Typography>
+                                  <Typography>
+                                    Assigned:
+                                    {` ${post.assigned.first_name} ${post.assigned.last_name}`}
+                                  </Typography>
+                                  <Box
+                                    sx={{
+                                      width: "100%",
+                                      position: "relative",
+                                      height: "3.6em",
+                                      overflow: "hidden",
+                                      "&:after": {
+                                        content: '""',
+                                        textAlign: "right",
+                                        position: "absolute",
+                                        bottom: 0,
+                                        right: 0,
+                                        width: "80%",
+                                        height: "1.2em",
+                                        background:
+                                          "linear-gradient(to right, rgba(255, 192, 203, 0), rgba(255, 192, 203, 1) 85%)",
+                                      },
+                                    }}
+                                  >
+                                    <Typography variant="body2">
+                                      {post.description}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </>
+            );
+          })}
       </DragDropContext>
-    </div>
+    </>
   );
 }
 function userState(): [any, any] {

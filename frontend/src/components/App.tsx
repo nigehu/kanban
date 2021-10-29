@@ -9,6 +9,7 @@ import {
   Tabs,
   TextField,
   Typography,
+  Paper,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { Route, Switch, useHistory, useLocation } from "react-router-dom";
@@ -16,7 +17,7 @@ import HomePage from "./home/HomePage";
 import KanbanBoard from "./kanban/KanbanBoard";
 import Login from "./Login";
 import Users from "./Users";
-import { IUser } from "../interfaces/IUser";
+import IUser from "../interfaces/IUser";
 
 function App() {
   const location = useLocation();
@@ -25,7 +26,7 @@ function App() {
   const [me, setMe] = useState<IUser>();
 
   useEffect(() => {
-    const path = location.pathname.replace(/\d+/g, "");
+    const path = location.pathname.replace(/[\d+\/]/g, "");
     console.log(path);
     setSelectedTab(path);
   }, [location.pathname]);
@@ -53,11 +54,11 @@ function App() {
             onChange={(e, v) => handleTabChange(v)}
             aria-label="navigation tabs"
           >
-            <Tab label="home" value="/" {...a11yProps("nav", "home")} />
-            <Tab label="users" value="/users/" {...a11yProps("nav", "users")} />
+            <Tab label="home" value="" {...a11yProps("nav", "home")} />
+            <Tab label="users" value="users" {...a11yProps("nav", "users")} />
             <Tab
               label="kanban"
-              value="/kanban/"
+              value="kanban"
               {...a11yProps("nav", "kanban")}
             />
           </Tabs>
@@ -74,22 +75,25 @@ function App() {
             backgroundColor: "#EEEEEE",
             height: "calc(100vh - 50px)",
             p: 2,
+            overflow: "auto",
           }}
         >
-          <Switch>
-            <Route exact path="/">
-              <HomePage />
-            </Route>
-            <Route path="/kanban/:id">
-              <KanbanBoard />
-            </Route>
-            <Route path="/users">
-              <Users />
-            </Route>
-            <Route path="*">
-              <h1>Yikes! No page found here...</h1>
-            </Route>
-          </Switch>
+          <Paper sx={{ p: 2 }}>
+            <Switch>
+              <Route exact path="/">
+                <HomePage />
+              </Route>
+              <Route path="/kanban/:id">
+                <KanbanBoard />
+              </Route>
+              <Route path="/users">
+                <Users />
+              </Route>
+              <Route path="*">
+                <h1>Yikes! No page found here...</h1>
+              </Route>
+            </Switch>
+          </Paper>
         </Box>
       </Login>
     </div>

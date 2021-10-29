@@ -1,4 +1,4 @@
-interface IUser {
+export default interface IUser {
   session_id: number;
   username: string;
   first_name: string;
@@ -12,4 +12,4 @@ interface IUserSubmission {
   last_name: string;
 }
 
-export { IUser, IUserSubmission };
+export { IUserSubmission };

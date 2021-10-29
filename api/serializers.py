@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Board, Post, User
+from .models import Board, Column, Post, User
 
 class CreateBoardSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,8 +21,23 @@ class CreateUserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username','first_name','last_name')
 
+class PostSerializer(serializers.ModelSerializer):
+    assigned = UserSerializer(read_only=True)
+    class Meta:
+        model = Post
+        fields = '__all__'
+
+class ColumnSerializer(serializers.ModelSerializer):
+    posts = PostSerializer(many=True)
+
+    class Meta:
+        model = Column
+        fields = '__all__'
+
 class BoardSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    columns = ColumnSerializer(many=True)
     class Meta:
         model = Board
-        fields = ('id','name','user')
+        fields = '__all__'
+        #fields = ('id','name','user','columns')

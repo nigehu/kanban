@@ -10,7 +10,7 @@ import {
   Fade,
 } from "@mui/material";
 import React, { ChangeEvent, ReactNode, useEffect, useState } from "react";
-import { IUser, IUserSubmission } from "../interfaces/IUser";
+import IUser, { IUserSubmission } from "../interfaces/IUser";
 
 interface ILogin {
   me: IUser;
@@ -37,7 +37,7 @@ function Login({ me, setMe, children }: ILogin) {
           try {
             const data: IUser | undefined = await response.json();
             if (response.ok && data) {
-              setSessionUser(data);
+              setMe(data);
               setLoading(false);
             } else {
               return Promise.reject(data);

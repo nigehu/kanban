@@ -80,3 +80,9 @@ class BoardViewSet(viewsets.ViewSet):
         queryset = Board.objects.all()
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        queryset = Board.objects.all()
+        board = get_object_or_404(queryset, pk=pk)
+        serializer = self.serializer_class(board)
+        return Response(serializer.data)
