@@ -11,7 +11,7 @@ class User(models.Model):
 
 class Board(models.Model):
     name = models.CharField(max_length=100, default="Untitled Board", unique=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, default=0)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=0)
 
 class Column(models.Model):
     name = models.CharField(max_length=100, default="", unique=True)
@@ -24,5 +24,5 @@ class Post(models.Model):
     description = models.CharField(max_length=1000, default="")
     due_date = models.DateTimeField(null=True)
     created = models.DateTimeField(auto_now_add=True)
-    assigned = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
+    assigned = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     column = models.ForeignKey(Column, on_delete=models.CASCADE, default=0, related_name='posts')
