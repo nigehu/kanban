@@ -26,3 +26,6 @@ class Post(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     assigned = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     column = models.ForeignKey(Column, on_delete=models.CASCADE, default=0, related_name='posts')
+
+    class Meta:
+        ordering = ['position', 'pk']

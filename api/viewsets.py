@@ -1,9 +1,10 @@
 from .models import User, Board, Post, Column
-from .serializers import UserSerializer, BoardSerializer
+from .serializers import UserSerializer, BoardSerializer,ColumnSerializer,PostSerializer,PostActionSerializer,PostPositionSerializer,PostPositionUpdateSerializer
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+from rest_framework.permissions import AllowAny
 
 class UserViewSet(viewsets.ViewSet):
     """
@@ -11,6 +12,7 @@ class UserViewSet(viewsets.ViewSet):
     """
     serializer_class = UserSerializer
     queryset = User.objects.all()
+    permission_classes = [AllowAny]
 
     def list(self, request):
         username = request.GET.get('username', None)
@@ -86,3 +88,79 @@ class BoardViewSet(viewsets.ViewSet):
         board = get_object_or_404(queryset, pk=pk)
         serializer = self.serializer_class(board)
         return Response(serializer.data)
+
+class ColumnViewSet(viewsets.ViewSet):
+    """
+    A viewset for viewing and editing column instances.
+    """
+    serializer_class = ColumnSerializer
+    queryset = Column.objects.all()
+
+    def list(self, request):
+        queryset = Column.objects.all()
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        queryset = Column.objects.all()
+        column = get_object_or_404(queryset, pk=pk)
+        serializer = self.serializer_class(column)
+        return Response(serializer.data)
+
+class PostViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing post instances.
+    """
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
+    permission_classes = [AllowAny]
+
+    def list(self, request):
+        queryset = Post.objects.all()
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        queryset = Post.objects.all()
+        post = get_object_or_404(queryset, pk=pk)
+        serializer = self.serializer_class(post)
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        post = self.get_object()
+        serializer = PostActionSerializer(self, data=request.data)
+
+        if serializer.is_valid():
+            data = serializer.validated_data
+            post.title = data['title']
+            post.position = data['position']
+            post.description = data['description']
+            post.due_date = data['due_date']
+            post.assigned = data['assigned']
+            post.column = data['column']
+            post.save()
+
+            serializer = self.serializer_class(post)
+            return Response(serializer.data)    
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        post = self.get_object()
+        serializer = self.serializer_class(post, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            data = serializer.validated_data
+            post.title = data['title']
+            post.position = data['position']
+
+            post.save()
+
+            serializer = self.serializer_class(post)
+            return Response(serializer.data)    
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['patch'], url_path='positions', serializer_class=PostPositionUpdateSerializer)
+    def update_positions(self, request):
+        for data in request.data['posts']:
+            self.queryset.filter(id=data['id']).update(position=data['position'], column=data['column'])
+        return Response(status=status.HTTP_204_NO_CONTENT)

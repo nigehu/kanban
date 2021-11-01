@@ -23,9 +23,16 @@ import { useParams } from "react-router-dom";
 import IBoard from "../../interfaces/IBoard";
 import AddPostDialog from "./AddPostDialog";
 import IColumn from "../../interfaces/IColumn";
+import IPost from "../../interfaces/IPost";
 
 interface IParam {
   id?: string;
+}
+
+interface IPositionUpdate {
+  id: number;
+  position: number;
+  column: number;
 }
 
 export default function KanbanBoard() {
@@ -60,9 +67,34 @@ export default function KanbanBoard() {
     fetchData();
   }, []);
 
+  function getPositionUpdate(post: IPost) {
+    return {
+      id: post.id,
+      position: post.position,
+      column: post.column,
+    } as IPositionUpdate;
+  }
+
+  async function updatePositions(updates: IPositionUpdate[]) {
+    console.log(updates);
+    fetch(`/api/post/positions/`, {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ posts: updates }),
+    }).then(async (response) => {
+      if (response.status === 204) {
+        console.log("Success!");
+        return;
+      }
+    });
+  }
+
   function onDragEnd({ destination, source }: DropResult) {
-    console.log(destination, source);
     if (destination) {
+      const positionUpdate: IPositionUpdate[] = [];
       const destId = parseInt(destination.droppableId);
       const srcId = parseInt(source.droppableId);
       if (destId === srcId) {
@@ -79,24 +111,17 @@ export default function KanbanBoard() {
             )
               return post;
 
+            let newPost: IPost = { ...post };
             if (post.position === source.index) {
-              return {
-                ...post,
-                position: destination.index,
-              };
+              newPost.position = destination.index;
+            } else if (isAscending) {
+              newPost.position = post.position - 1;
+            } else {
+              newPost.position = post.position + 1;
             }
 
-            if (isAscending) {
-              return {
-                ...post,
-                position: post.position - 1,
-              };
-            } else {
-              return {
-                ...post,
-                position: post.position + 1,
-              };
-            }
+            positionUpdate.push(getPositionUpdate(newPost));
+            return newPost;
           });
           const sortedPosts = newList.sort((a, b) => a.position - b.position);
           const newColumns = board.columns.map((col) => {
@@ -113,10 +138,10 @@ export default function KanbanBoard() {
         const destinationColumn = board.columns.find((c) => c.id === destId)!;
         const newDestinationPosts = destinationColumn.posts.map((p) => {
           if (p.position >= destination.index) {
-            return {
-              ...p,
-              position: p.position + 1,
-            };
+            let newPost = { ...p, position: p.position + 1 };
+
+            positionUpdate.push(getPositionUpdate(newPost));
+            return newPost;
           } else {
             return p;
           }
@@ -124,10 +149,13 @@ export default function KanbanBoard() {
         const sourcePost = sourceColumn.posts.find(
           (p) => p.position === source.index
         )!;
-        newDestinationPosts.push({
+        const newSourcePost = {
           ...sourcePost,
           position: destination.index,
-        });
+          column: destId,
+        };
+        positionUpdate.push(getPositionUpdate(newSourcePost));
+        newDestinationPosts.push(newSourcePost);
         const sortedDestinationPosts = newDestinationPosts.sort(
           (a, b) => a.position - b.position
         );
@@ -135,7 +163,10 @@ export default function KanbanBoard() {
           .filter((p) => p.position !== source.index)
           .map((p) => {
             if (p.position >= source.index) {
-              return { ...p, position: p.position - 1 };
+              let newPost = { ...p, position: p.position - 1 };
+
+              positionUpdate.push(getPositionUpdate(newPost));
+              return newPost;
             } else {
               return p;
             }
@@ -151,12 +182,11 @@ export default function KanbanBoard() {
         });
         setBoard({ ...board, columns: newColumnList });
       }
+      updatePositions(positionUpdate);
     }
   }
 
   if (!board) return null;
-
-  console.log(board);
 
   return (
     <>

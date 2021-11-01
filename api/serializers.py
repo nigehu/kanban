@@ -27,6 +27,19 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = '__all__'
 
+class PostActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = '__all__'
+
+class PostPositionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ('id','position','column')
+
+class PostPositionUpdateSerializer(serializers.Serializer):
+    posts = PostPositionSerializer(many=True)
+
 class ColumnSerializer(serializers.ModelSerializer):
     posts = PostSerializer(many=True)
 
