@@ -23,7 +23,8 @@ import { useParams } from "react-router-dom";
 import IBoard from "../../interfaces/IBoard";
 import AddPostDialog from "./AddPostDialog";
 import IColumn from "../../interfaces/IColumn";
-import IPost from "../../interfaces/IPost";
+import IPost, { IPostSubmission } from "../../interfaces/IPost";
+import IUser from "../../interfaces/IUser";
 
 interface IParam {
   id?: string;
@@ -38,11 +39,12 @@ interface IPositionUpdate {
 export default function KanbanBoard() {
   let { id } = useParams<IParam>();
   const [board, setBoard] = useState<IBoard | undefined>();
+  const [users, setUsers] = useState<IUser[]>([]);
   const [column, setColumn] = useState<IColumn | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchBoard = new Promise(async () => {
       fetch(`/api/board/${id}`).then(async (response) => {
         if (response.status === 401 || response.status === 204) {
           return;
@@ -51,20 +53,43 @@ export default function KanbanBoard() {
           const data: IBoard | undefined = await response.json();
           if (response.ok && data) {
             setBoard(data);
-            setLoading(false);
+            Promise.resolve();
           } else {
             return Promise.reject(data);
           }
         } catch (err) {
           console.error(err);
           if (response.ok) {
-            return true;
+            Promise.resolve();
           }
         }
       });
-    };
+    });
+    const fetchUsers = new Promise(async () => {
+      fetch(`/api/user`).then(async (response) => {
+        if (response.status === 401 || response.status === 204) {
+          return;
+        }
+        try {
+          const data: IUser[] | undefined = await response.json();
+          if (response.ok && data) {
+            setUsers(data);
+            Promise.resolve();
+          } else {
+            return Promise.reject(data);
+          }
+        } catch (err) {
+          console.error(err);
+          if (response.ok) {
+            Promise.resolve();
+          }
+        }
+      });
+    });
 
-    fetchData();
+    Promise.all([fetchBoard, fetchUsers]).then(() => {
+      setLoading(false);
+    });
   }, []);
 
   function getPositionUpdate(post: IPost) {
@@ -186,6 +211,55 @@ export default function KanbanBoard() {
     }
   }
 
+  const addNewPost = (post: IPostSubmission) => {
+    setLoading(true);
+    fetch(`/api/post/`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(post),
+    }).then(async (response) => {
+      if (response.status === 401 || response.status === 204) {
+        console.log("Success!");
+        return;
+      }
+      try {
+        const data: IPost | undefined = await response.json();
+        if (response.ok && data) {
+          // TODO: Update all positions
+          // TODO: Add response to list
+          const newPostList = column.posts.map((p) => ({
+            ...p,
+            position: p.position + 1,
+          }));
+          newPostList.unshift(data);
+          setBoard({
+            ...board,
+            columns: board.columns.map((c) => {
+              if (c.id === column.id) {
+                return { ...column, posts: newPostList };
+              }
+              return c;
+            }),
+          });
+          setColumn(null);
+          setLoading(false);
+        } else {
+          setLoading(false);
+          return Promise.reject(data);
+        }
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
+        if (response.ok) {
+          return true;
+        }
+      }
+    });
+  };
+
   if (!board) return null;
 
   return (
@@ -194,31 +268,31 @@ export default function KanbanBoard() {
       <DragDropContext onDragEnd={onDragEnd}>
         <Grid container spacing={2}>
           {board.columns &&
-            board.columns.map((column) => {
-              const handleAddClick = () => {};
+            board.columns.map((col) => {
               return (
-                <Grid item sx={{ width: 300 }} key={column.id}>
+                <Grid item sx={{ width: 300 }} key={col.id}>
                   <Paper sx={{ backgroundColor: "green", p: 2 }}>
                     <Typography sx={{ fontWeight: "bold" }}>
-                      {column.name}
+                      {col.name}
                     </Typography>
                     <Button
                       sx={{ width: "100%" }}
                       variant="outlined"
                       color="secondary"
                       startIcon={<Add />}
+                      onClick={() => setColumn(col)}
                     >
                       Add
                     </Button>
 
-                    <Droppable type="FIELD" droppableId={column.id.toString()}>
+                    <Droppable type="FIELD" droppableId={col.id.toString()}>
                       {(provided, _) => (
                         <Box
                           ref={provided.innerRef}
                           {...provided.droppableProps}
                           sx={{ minHeight: 150, pt: 1 }}
                         >
-                          {column.posts.map((post, index) => {
+                          {col.posts.map((post, index) => {
                             return (
                               <Draggable
                                 key={post.id}
@@ -243,8 +317,9 @@ export default function KanbanBoard() {
                                         {post.title}
                                       </Typography>
                                       <Typography>
-                                        Assigned:
-                                        {` ${post.assigned.first_name} ${post.assigned.last_name}`}
+                                        {post.assigned
+                                          ? `Assigned: ${post.assigned.first_name} ${post.assigned?.last_name}`
+                                          : "Unassigned"}
                                       </Typography>
                                       <Box
                                         sx={{
@@ -285,7 +360,9 @@ export default function KanbanBoard() {
             })}
         </Grid>
       </DragDropContext>
-      {column && <AddPostDialog column={column} />}
+      {column && (
+        <AddPostDialog column={column} users={users} savePost={addNewPost} />
+      )}
     </>
   );
 }

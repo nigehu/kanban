@@ -18,6 +18,8 @@ import KanbanBoard from "./kanban/KanbanBoard";
 import Login from "./Login";
 import Users from "./Users";
 import IUser from "../interfaces/IUser";
+import AdapterDateFns from "@mui/lab/AdapterDateFns";
+import LocalizationProvider from "@mui/lab/LocalizationProvider";
 
 function App() {
   const location = useLocation();
@@ -43,7 +45,7 @@ function App() {
   }
 
   return (
-    <div>
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Box
         display="flex"
         sx={{ height: 50, width: "100vw", backgroundColor: "red" }}
@@ -96,7 +98,7 @@ function App() {
           </Paper>
         </Box>
       </Login>
-    </div>
+    </LocalizationProvider>
   );
 }
 

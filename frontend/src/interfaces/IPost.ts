@@ -7,6 +7,15 @@ export default interface IPost {
   description: string;
   due_date: string;
   created: string;
-  assigned: IUser;
+  assigned?: IUser;
+  column: number;
+}
+
+export interface IPostSubmission {
+  title: string;
+  position: number;
+  description: string;
+  due_date: string;
+  assigned?: number;
   column: number;
 }

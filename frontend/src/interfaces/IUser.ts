@@ -1,5 +1,6 @@
 export default interface IUser {
-  session_id: number;
+  id: number;
+  session_id: string;
   username: string;
   first_name: string;
   last_name: string;

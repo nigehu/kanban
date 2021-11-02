@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import AllowAny
+from django.db.models import F
 
 class UserViewSet(viewsets.ViewSet):
     """
@@ -125,6 +126,29 @@ class PostViewSet(viewsets.ModelViewSet):
         post = get_object_or_404(queryset, pk=pk)
         serializer = self.serializer_class(post)
         return Response(serializer.data)
+
+    def create(self, request):
+        serializer = PostActionSerializer(self, data=request.data)
+
+        if serializer.is_valid():
+            post = serializer.validated_data
+            post = Post.objects.create(**post)
+            post.save()
+            columnId = post.column.id
+
+            Post.objects.filter(column__id=columnId).exclude(id=post.id).update(position=F('position') + 1)
+            queryset = Post.objects.all()
+            post = get_object_or_404(queryset, pk=post.id)
+            serializer = self.serializer_class(post)
+
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED
+            )
+
+        return Response({
+            'status': 'Bad request',
+            'message': 'Post could not be created with received data.'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
         post = self.get_object()
