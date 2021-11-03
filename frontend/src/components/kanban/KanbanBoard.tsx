@@ -1,5 +1,5 @@
 import { Add } from "@mui/icons-material";
-import { Box, Button, Grid, Paper, Typography } from "@mui/material";
+import { Box, Button, Grid, Paper, TextField, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import {
   DragDropContext,
@@ -10,7 +10,12 @@ import {
 import { useParams } from "react-router-dom";
 import { getBoard } from "../../api/board";
 import { getUserList } from "../../api/user";
-import { createPost, patchPositions, updatePost } from "../../api/post";
+import {
+  createPost,
+  deletePost,
+  patchPositions,
+  updatePost,
+} from "../../api/post";
 import IBoard from "../../interfaces/IBoard";
 import IColumn from "../../interfaces/IColumn";
 import IPost, {
@@ -21,6 +26,8 @@ import IPost, {
 import IUser from "../../interfaces/IUser";
 import AddPostDialog from "./AddPostDialog";
 import KanbanPost from "./KanbanPost";
+import KanbanColumn from "./KanbanColumn";
+import { useDebouncedCallback } from "use-debounce/lib";
 
 interface IParam {
   id?: string;
@@ -83,7 +90,7 @@ export default function KanbanBoard() {
             } else {
               newPost.position = post.position + 1;
             }
-
+            debugger;
             positionUpdate.push(getPositionUpdate(newPost));
             return newPost;
           });
@@ -118,6 +125,7 @@ export default function KanbanBoard() {
           position: destination.index,
           column: destId,
         };
+
         positionUpdate.push(getPositionUpdate(newSourcePost));
         newDestinationPosts.push(newSourcePost);
         const sortedDestinationPosts = newDestinationPosts.sort(
@@ -171,6 +179,18 @@ export default function KanbanBoard() {
     setLoading(false);
   };
 
+  const handleColumnUpdate = (column: IColumn) => {
+    setBoard({
+      ...board,
+      columns: board.columns.map((c) => {
+        if (c.id === column.id) {
+          return column;
+        }
+        return c;
+      }),
+    });
+  };
+
   if (!board) return null;
 
   return (
@@ -181,11 +201,24 @@ export default function KanbanBoard() {
           {board.columns &&
             board.columns.map((col) => {
               return (
-                <Grid item sx={{ width: 300 }} key={col.id}>
-                  <Paper sx={{ backgroundColor: "green", p: 2 }}>
-                    <Typography sx={{ fontWeight: "bold" }}>
-                      {col.name}
-                    </Typography>
+                <Grid
+                  item
+                  sx={{
+                    width: 300,
+                  }}
+                  key={col.id}
+                >
+                  <KanbanColumn
+                    passedColumn={col}
+                    users={users}
+                    updateColumns={handleColumnUpdate}
+                  />
+                  {/* <Paper sx={{ backgroundColor: "green", p: 2 }}>
+                    <TextField
+                      sx={{ pb: 1 }}
+                      value={col.name}
+                      variant="standard"
+                    />
                     <Button
                       sx={{ width: "100%" }}
                       variant="outlined"
@@ -201,7 +234,12 @@ export default function KanbanBoard() {
                         <Box
                           ref={provided.innerRef}
                           {...provided.droppableProps}
-                          sx={{ minHeight: 150, pt: 1 }}
+                          sx={{
+                            minHeight: 100,
+                            pt: 1,
+                            height: `calc(100vh - 318px)`,
+                            overflow: "auto",
+                          }}
                         >
                           {col.posts.map((post, index) => {
                             return (
@@ -243,6 +281,25 @@ export default function KanbanBoard() {
                                     });
                                     setLoading(false);
                                   };
+
+                                  const handleDeletePost = async () => {
+                                    setLoading(true);
+                                    await deletePost(post.id);
+                                    const newPostList = col.posts.filter(
+                                      (p) => p.id !== post.id
+                                    );
+                                    setBoard({
+                                      ...board,
+                                      columns: board.columns.map((c) => {
+                                        if (c.id === col.id) {
+                                          return { ...col, posts: newPostList };
+                                        }
+                                        return c;
+                                      }),
+                                    });
+                                    setLoading(false);
+                                  };
+
                                   return (
                                     <div
                                       {...provided.draggableProps}
@@ -253,7 +310,7 @@ export default function KanbanBoard() {
                                         post={post}
                                         users={users}
                                         savePostEdits={savePostEdits}
-                                        deletePost={() => console.log("delete")}
+                                        deletePost={handleDeletePost}
                                       />
                                     </div>
                                   );
@@ -265,7 +322,7 @@ export default function KanbanBoard() {
                         </Box>
                       )}
                     </Droppable>
-                  </Paper>
+                  </Paper> */}
                 </Grid>
               );
             })}

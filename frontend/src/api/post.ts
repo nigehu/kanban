@@ -23,9 +23,13 @@ async function updatePost(id: number, post: IPostUpdate) {
 }
 
 async function patchPositions(positionUpdates: IPostPositionUpdate[]) {
-  return await fetchUrl<IPost>("post/positions", "PATCH", {
+  return await fetchUrl<void>("post/positions", "PATCH", {
     posts: positionUpdates,
   });
 }
 
-export { createPost, updatePost, patchPositions };
+async function deletePost(id: number) {
+  return await fetchUrl<void>(`post/${id}`, "DELETE");
+}
+
+export { createPost, updatePost, patchPositions, deletePost };

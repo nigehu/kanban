@@ -182,6 +182,12 @@ class PostViewSet(viewsets.ModelViewSet):
             serializer = self.serializer_class(post)
             return Response(serializer.data)    
         return Response(serializer.data)
+                
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        Post.objects.filter(column__id=instance.column_id,position__gt=instance.position).update(position=F('position') - 1)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['patch'], url_path='positions', serializer_class=PostPositionUpdateSerializer)
     def update_positions(self, request):

@@ -38,6 +38,11 @@ export default function KanbanPost({
     savePostEdits(postUpdates);
   };
 
+  const handleDeletePost = () => {
+    setOpen(false);
+    deletePost();
+  };
+
   return (
     <>
       <Grid
@@ -103,7 +108,7 @@ export default function KanbanPost({
           users={users}
           savePostEdits={handleSavePost}
           cancelPostEdits={() => setOpen(false)}
-          deletePost={deletePost}
+          deletePost={handleDeletePost}
         />
       )}
     </>

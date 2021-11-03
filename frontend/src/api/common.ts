@@ -14,9 +14,9 @@ export default async function fetchUrl<T = any>(
     };
 
     const response = await fetch(`/api/${url}/`, options);
-    if (response.status === 401 || response.status === 204) {
-      console.log("Success!");
-      return;
+    // Handle no content
+    if (response.status === 204) {
+      resolve(null);
     }
     try {
       const data: T = await response.json();
