@@ -19,3 +19,11 @@ export interface IPostSubmission {
   assigned?: number;
   column: number;
 }
+
+export interface IPostEditing extends Omit<IPost, "due_date"> {
+  due_date: Date;
+}
+
+export interface IPostUpdate extends Omit<IPost, "assigned"> {
+  assigned: number;
+}

@@ -22,9 +22,11 @@ import {
 import { useParams } from "react-router-dom";
 import IBoard from "../../interfaces/IBoard";
 import AddPostDialog from "./AddPostDialog";
+import KanbanPost from "./KanbanPost";
 import IColumn from "../../interfaces/IColumn";
-import IPost, { IPostSubmission } from "../../interfaces/IPost";
+import IPost, { IPostSubmission, IPostUpdate } from "../../interfaces/IPost";
 import IUser from "../../interfaces/IUser";
+import { formatISO } from "date-fns";
 
 interface IParam {
   id?: string;
@@ -228,8 +230,6 @@ export default function KanbanBoard() {
       try {
         const data: IPost | undefined = await response.json();
         if (response.ok && data) {
-          // TODO: Update all positions
-          // TODO: Add response to list
           const newPostList = column.posts.map((p) => ({
             ...p,
             position: p.position + 1,
@@ -299,54 +299,78 @@ export default function KanbanBoard() {
                                 draggableId={post.id.toString()}
                                 index={index}
                               >
-                                {(provided, snapshot) => (
-                                  <div
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
-                                    ref={provided.innerRef}
-                                  >
-                                    <Box
-                                      sx={{
-                                        p: 1,
-                                        m: 1,
-                                        backgroundColor: "pink",
-                                        border: "solid grey 1px",
-                                      }}
+                                {(provided, snapshot) => {
+                                  const savePostEdits = async (
+                                    postUpdate: IPost
+                                  ) => {
+                                    setLoading(true);
+                                    fetch(`/api/post/${postUpdate.id}/`, {
+                                      method: "PUT",
+                                      headers: {
+                                        Accept: "application/json",
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        ...postUpdate,
+                                        assigned: postUpdate.assigned
+                                          ? postUpdate.assigned.id
+                                          : null,
+                                      } as IPostUpdate),
+                                    }).then(async (response) => {
+                                      if (
+                                        response.status === 401 ||
+                                        response.status === 204
+                                      ) {
+                                        console.log("Success!");
+                                        return;
+                                      }
+                                      try {
+                                        const data: IPost | undefined =
+                                          await response.json();
+                                        if (response.ok && data) {
+                                          const newPostList = col.posts.map(
+                                            (p) => (p.id === data.id ? data : p)
+                                          );
+                                          setBoard({
+                                            ...board,
+                                            columns: board.columns.map((c) => {
+                                              if (c.id === col.id) {
+                                                return {
+                                                  ...col,
+                                                  posts: newPostList,
+                                                };
+                                              }
+                                              return c;
+                                            }),
+                                          });
+                                          setLoading(false);
+                                        } else {
+                                          setLoading(false);
+                                          return Promise.reject(data);
+                                        }
+                                      } catch (err) {
+                                        console.error(err);
+                                        setLoading(false);
+                                        if (response.ok) {
+                                          return true;
+                                        }
+                                      }
+                                    });
+                                  };
+                                  return (
+                                    <div
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      ref={provided.innerRef}
                                     >
-                                      <Typography variant="subtitle1">
-                                        {post.title}
-                                      </Typography>
-                                      <Typography>
-                                        {post.assigned
-                                          ? `Assigned: ${post.assigned.first_name} ${post.assigned?.last_name}`
-                                          : "Unassigned"}
-                                      </Typography>
-                                      <Box
-                                        sx={{
-                                          width: "100%",
-                                          position: "relative",
-                                          height: "3.6em",
-                                          overflow: "hidden",
-                                          "&:after": {
-                                            content: '""',
-                                            textAlign: "right",
-                                            position: "absolute",
-                                            bottom: 0,
-                                            right: 0,
-                                            width: "80%",
-                                            height: "1.2em",
-                                            background:
-                                              "linear-gradient(to right, rgba(255, 192, 203, 0), rgba(255, 192, 203, 1) 85%)",
-                                          },
-                                        }}
-                                      >
-                                        <Typography variant="body2">
-                                          {post.description}
-                                        </Typography>
-                                      </Box>
-                                    </Box>
-                                  </div>
-                                )}
+                                      <KanbanPost
+                                        post={post}
+                                        users={users}
+                                        savePostEdits={savePostEdits}
+                                      />
+                                    </div>
+                                  );
+                                }}
                               </Draggable>
                             );
                           })}
