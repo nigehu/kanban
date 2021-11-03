@@ -22,12 +22,14 @@ interface IKanbanPost {
   post: IPost;
   users: IUser[];
   savePostEdits: (post: IPost) => void;
+  deletePost: () => void;
 }
 
 export default function KanbanPost({
   post,
   users,
   savePostEdits,
+  deletePost,
 }: IKanbanPost) {
   const [open, setOpen] = useState<boolean>(false);
 
@@ -101,6 +103,7 @@ export default function KanbanPost({
           users={users}
           savePostEdits={handleSavePost}
           cancelPostEdits={() => setOpen(false)}
+          deletePost={deletePost}
         />
       )}
     </>

@@ -21,8 +21,8 @@ class Column(models.Model):
 class Post(models.Model):
     title = models.CharField(max_length=100, default="")
     position = models.IntegerField(null=False, default=1)
-    description = models.CharField(max_length=1000, default="")
-    due_date = models.DateTimeField(null=True)
+    description = models.CharField(max_length=1000, default="", blank=True)
+    due_date = models.DateTimeField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     assigned = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     column = models.ForeignKey(Column, on_delete=models.CASCADE, default=0, related_name='posts')

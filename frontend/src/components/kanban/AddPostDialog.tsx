@@ -21,14 +21,6 @@ import IColumn from "../../interfaces/IColumn";
 import IPost, { IPostSubmission } from "../../interfaces/IPost";
 import IUser from "../../interfaces/IUser";
 
-const StyledTextField = styled(OutlinedInput)(({ theme }) => ({
-  transition: theme.transitions.create("width"),
-  width: 200,
-  "&:focus-within": {
-    width: "100%",
-  },
-}));
-
 interface IAddPostDialog {
   column: IColumn;
   users: IUser[];
@@ -64,8 +56,8 @@ export default function AddPostDialog({
       title: title,
       position: 0,
       description: description,
-      due_date: formatISO(dueDate),
-      assigned: assignedId,
+      due_date: dueDate ? formatISO(dueDate) : null,
+      assigned: assignedId === 0 ? null : assignedId,
       column: column.id,
     } as IPostSubmission;
     savePost(post);

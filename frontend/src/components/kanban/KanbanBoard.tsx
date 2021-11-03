@@ -1,17 +1,5 @@
 import { Add } from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Grid,
-  Paper,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Grid, Paper, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import {
   DragDropContext,
@@ -20,22 +8,22 @@ import {
   DropResult,
 } from "react-beautiful-dnd";
 import { useParams } from "react-router-dom";
+import { getBoard } from "../../api/board";
+import { getUserList } from "../../api/user";
+import { createPost, patchPositions, updatePost } from "../../api/post";
 import IBoard from "../../interfaces/IBoard";
+import IColumn from "../../interfaces/IColumn";
+import IPost, {
+  IPostSubmission,
+  IPostUpdate,
+  IPostPositionUpdate,
+} from "../../interfaces/IPost";
+import IUser from "../../interfaces/IUser";
 import AddPostDialog from "./AddPostDialog";
 import KanbanPost from "./KanbanPost";
-import IColumn from "../../interfaces/IColumn";
-import IPost, { IPostSubmission, IPostUpdate } from "../../interfaces/IPost";
-import IUser from "../../interfaces/IUser";
-import { formatISO } from "date-fns";
 
 interface IParam {
   id?: string;
-}
-
-interface IPositionUpdate {
-  id: number;
-  position: number;
-  column: number;
 }
 
 export default function KanbanBoard() {
@@ -47,46 +35,12 @@ export default function KanbanBoard() {
 
   useEffect(() => {
     const fetchBoard = new Promise(async () => {
-      fetch(`/api/board/${id}`).then(async (response) => {
-        if (response.status === 401 || response.status === 204) {
-          return;
-        }
-        try {
-          const data: IBoard | undefined = await response.json();
-          if (response.ok && data) {
-            setBoard(data);
-            Promise.resolve();
-          } else {
-            return Promise.reject(data);
-          }
-        } catch (err) {
-          console.error(err);
-          if (response.ok) {
-            Promise.resolve();
-          }
-        }
-      });
+      const responseBoard = await getBoard(id);
+      setBoard(responseBoard);
     });
     const fetchUsers = new Promise(async () => {
-      fetch(`/api/user`).then(async (response) => {
-        if (response.status === 401 || response.status === 204) {
-          return;
-        }
-        try {
-          const data: IUser[] | undefined = await response.json();
-          if (response.ok && data) {
-            setUsers(data);
-            Promise.resolve();
-          } else {
-            return Promise.reject(data);
-          }
-        } catch (err) {
-          console.error(err);
-          if (response.ok) {
-            Promise.resolve();
-          }
-        }
-      });
+      const responseUsers = await getUserList();
+      setUsers(responseUsers);
     });
 
     Promise.all([fetchBoard, fetchUsers]).then(() => {
@@ -99,29 +53,12 @@ export default function KanbanBoard() {
       id: post.id,
       position: post.position,
       column: post.column,
-    } as IPositionUpdate;
-  }
-
-  async function updatePositions(updates: IPositionUpdate[]) {
-    console.log(updates);
-    fetch(`/api/post/positions/`, {
-      method: "PATCH",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ posts: updates }),
-    }).then(async (response) => {
-      if (response.status === 204) {
-        console.log("Success!");
-        return;
-      }
-    });
+    } as IPostPositionUpdate;
   }
 
   function onDragEnd({ destination, source }: DropResult) {
     if (destination) {
-      const positionUpdate: IPositionUpdate[] = [];
+      const positionUpdate: IPostPositionUpdate[] = [];
       const destId = parseInt(destination.droppableId);
       const srcId = parseInt(source.droppableId);
       if (destId === srcId) {
@@ -209,55 +146,29 @@ export default function KanbanBoard() {
         });
         setBoard({ ...board, columns: newColumnList });
       }
-      updatePositions(positionUpdate);
+      patchPositions(positionUpdate);
     }
   }
 
-  const addNewPost = (post: IPostSubmission) => {
+  const addNewPost = async (post: IPostSubmission) => {
     setLoading(true);
-    fetch(`/api/post/`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(post),
-    }).then(async (response) => {
-      if (response.status === 401 || response.status === 204) {
-        console.log("Success!");
-        return;
-      }
-      try {
-        const data: IPost | undefined = await response.json();
-        if (response.ok && data) {
-          const newPostList = column.posts.map((p) => ({
-            ...p,
-            position: p.position + 1,
-          }));
-          newPostList.unshift(data);
-          setBoard({
-            ...board,
-            columns: board.columns.map((c) => {
-              if (c.id === column.id) {
-                return { ...column, posts: newPostList };
-              }
-              return c;
-            }),
-          });
-          setColumn(null);
-          setLoading(false);
-        } else {
-          setLoading(false);
-          return Promise.reject(data);
+    const responsePost = await createPost(post);
+    const newPostList = column.posts.map((p) => ({
+      ...p,
+      position: p.position + 1,
+    }));
+    newPostList.unshift(responsePost);
+    setBoard({
+      ...board,
+      columns: board.columns.map((c) => {
+        if (c.id === column.id) {
+          return { ...column, posts: newPostList };
         }
-      } catch (err) {
-        console.error(err);
-        setLoading(false);
-        if (response.ok) {
-          return true;
-        }
-      }
+        return c;
+      }),
     });
+    setColumn(null);
+    setLoading(false);
   };
 
   if (!board) return null;
@@ -304,58 +215,33 @@ export default function KanbanBoard() {
                                     postUpdate: IPost
                                   ) => {
                                     setLoading(true);
-                                    fetch(`/api/post/${postUpdate.id}/`, {
-                                      method: "PUT",
-                                      headers: {
-                                        Accept: "application/json",
-                                        "Content-Type": "application/json",
-                                      },
-                                      body: JSON.stringify({
+                                    const responsePost = await updatePost(
+                                      postUpdate.id,
+                                      {
                                         ...postUpdate,
                                         assigned: postUpdate.assigned
                                           ? postUpdate.assigned.id
                                           : null,
-                                      } as IPostUpdate),
-                                    }).then(async (response) => {
-                                      if (
-                                        response.status === 401 ||
-                                        response.status === 204
-                                      ) {
-                                        console.log("Success!");
-                                        return;
                                       }
-                                      try {
-                                        const data: IPost | undefined =
-                                          await response.json();
-                                        if (response.ok && data) {
-                                          const newPostList = col.posts.map(
-                                            (p) => (p.id === data.id ? data : p)
-                                          );
-                                          setBoard({
-                                            ...board,
-                                            columns: board.columns.map((c) => {
-                                              if (c.id === col.id) {
-                                                return {
-                                                  ...col,
-                                                  posts: newPostList,
-                                                };
-                                              }
-                                              return c;
-                                            }),
-                                          });
-                                          setLoading(false);
-                                        } else {
-                                          setLoading(false);
-                                          return Promise.reject(data);
+                                    );
+                                    const newPostList = col.posts.map((p) =>
+                                      p.id === responsePost.id
+                                        ? responsePost
+                                        : p
+                                    );
+                                    setBoard({
+                                      ...board,
+                                      columns: board.columns.map((c) => {
+                                        if (c.id === col.id) {
+                                          return {
+                                            ...col,
+                                            posts: newPostList,
+                                          };
                                         }
-                                      } catch (err) {
-                                        console.error(err);
-                                        setLoading(false);
-                                        if (response.ok) {
-                                          return true;
-                                        }
-                                      }
+                                        return c;
+                                      }),
                                     });
+                                    setLoading(false);
                                   };
                                   return (
                                     <div
@@ -367,6 +253,7 @@ export default function KanbanBoard() {
                                         post={post}
                                         users={users}
                                         savePostEdits={savePostEdits}
+                                        deletePost={() => console.log("delete")}
                                       />
                                     </div>
                                   );

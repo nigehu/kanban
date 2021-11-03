@@ -26,6 +26,7 @@ interface IAddPostDialog {
   users: IUser[];
   savePostEdits: (post: IPost) => void;
   cancelPostEdits: () => void;
+  deletePost: () => void;
 }
 
 export default function EditPostDialog({
@@ -33,6 +34,7 @@ export default function EditPostDialog({
   users,
   savePostEdits,
   cancelPostEdits,
+  deletePost,
 }: IAddPostDialog) {
   const [post, setPost] = useState<IPostEditing | null>(null);
   const [valid, setValid] = useState<boolean>(false);
@@ -129,7 +131,12 @@ export default function EditPostDialog({
         </Grid>
       </DialogContent>
       <DialogActions>
-        <Button onClick={cancelPostEdits}>Cancel</Button>
+        <Button color="error" onClick={deletePost}>
+          Delete
+        </Button>
+        <Button color="secondary" onClick={cancelPostEdits}>
+          Cancel
+        </Button>
         <Button disabled={!valid} onClick={handleSavePostClick}>
           Save
         </Button>

@@ -27,3 +27,9 @@ export interface IPostEditing extends Omit<IPost, "due_date"> {
 export interface IPostUpdate extends Omit<IPost, "assigned"> {
   assigned: number;
 }
+
+export interface IPostPositionUpdate {
+  id: number;
+  position: number;
+  column: number;
+}
