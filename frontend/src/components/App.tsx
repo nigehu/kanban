@@ -74,9 +74,10 @@ function App() {
       <Login me={me} setMe={setMe}>
         <Box
           sx={{
-            backgroundColor: "#EEEEEE",
+            backgroundColor: "grey.200",
             height: "calc(100vh - 50px)",
-            p: 2,
+            py: 2,
+            px: 1,
             overflow: "auto",
           }}
         >

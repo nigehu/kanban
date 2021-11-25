@@ -1,5 +1,5 @@
 from .models import User, Board, Post, Column
-from .serializers import UserSerializer, BoardSerializer,ColumnSerializer,PostSerializer,PostActionSerializer,PostPositionSerializer,PostPositionUpdateSerializer
+from .serializers import UserSerializer, BoardSerializer,ColumnSerializer,ColumnActionSerializer,PostSerializer,PostActionSerializer,PostPositionSerializer,PostPositionUpdateSerializer
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -90,12 +90,13 @@ class BoardViewSet(viewsets.ViewSet):
         serializer = self.serializer_class(board)
         return Response(serializer.data)
 
-class ColumnViewSet(viewsets.ViewSet):
+class ColumnViewSet(viewsets.ModelViewSet):
     """
     A viewset for viewing and editing column instances.
     """
     serializer_class = ColumnSerializer
     queryset = Column.objects.all()
+    permission_classes = [AllowAny]
 
     def list(self, request):
         queryset = Column.objects.all()
@@ -107,6 +108,50 @@ class ColumnViewSet(viewsets.ViewSet):
         column = get_object_or_404(queryset, pk=pk)
         serializer = self.serializer_class(column)
         return Response(serializer.data)
+
+    def create(self, request):
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            column = serializer.validated_data
+            column = Column.objects.create(**column)
+            column.save()
+            column = get_object_or_404(self.queryset, pk=column.id)
+            serializer = self.serializer_class(column)
+            
+
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED
+            )
+
+        return Response({
+            'status': 'Bad request',
+            'message': 'Post could not be created with received data.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+        column = self.get_object()
+        serializer = ColumnActionSerializer(column, data=request.data)
+
+        if serializer.is_valid():
+            data = serializer.validated_data
+            column.name = data['name']
+            column.position = data['position']
+            column.board = data['board']
+            column.save() 
+
+            serializer = self.serializer_class(column)
+            return Response(serializer.data)   
+        return Response({
+            'status': 'Bad request',
+            'message': 'Column could not be updated with received data.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+                
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        Column.objects.filter(board_id=instance.board_id,position__gt=instance.position).update(position=F('position') - 1)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class PostViewSet(viewsets.ModelViewSet):
     """
@@ -152,7 +197,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         post = self.get_object()
-        serializer = PostActionSerializer(self, data=request.data)
+        serializer = PostActionSerializer(post, data=request.data)
 
         if serializer.is_valid():
             data = serializer.validated_data
@@ -166,7 +211,10 @@ class PostViewSet(viewsets.ModelViewSet):
 
             serializer = self.serializer_class(post)
             return Response(serializer.data)    
-        return Response(serializer.data)
+        return Response({
+            'status': 'Bad request',
+            'message': 'Post could not be updated with received data.'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     def partial_update(self, request, *args, **kwargs):
         post = self.get_object()
@@ -181,7 +229,10 @@ class PostViewSet(viewsets.ModelViewSet):
 
             serializer = self.serializer_class(post)
             return Response(serializer.data)    
-        return Response(serializer.data)
+        return Response({
+            'status': 'Bad request',
+            'message': 'Post could not be updated with received data.'
+        }, status=status.HTTP_400_BAD_REQUEST)
                 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

@@ -1,5 +1,13 @@
 import { Add } from "@mui/icons-material";
-import { Box, Button, Grid, Paper, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  ButtonBase,
+  Grid,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
 import {
   DragDropContext,
@@ -17,7 +25,7 @@ import {
   updatePost,
 } from "../../api/post";
 import IBoard from "../../interfaces/IBoard";
-import IColumn from "../../interfaces/IColumn";
+import IColumn, { IColumnSubmission } from "../../interfaces/IColumn";
 import IPost, {
   IPostSubmission,
   IPostUpdate,
@@ -28,6 +36,7 @@ import AddPostDialog from "./AddPostDialog";
 import KanbanPost from "./KanbanPost";
 import KanbanColumn from "./KanbanColumn";
 import { useDebouncedCallback } from "use-debounce/lib";
+import { createColumn } from "../../api/column";
 
 interface IParam {
   id?: string;
@@ -63,12 +72,51 @@ export default function KanbanBoard() {
     } as IPostPositionUpdate;
   }
 
-  function onDragEnd({ destination, source }: DropResult) {
+  async function onDragEnd({ destination, source }: DropResult) {
     if (destination) {
       const positionUpdate: IPostPositionUpdate[] = [];
-      const destId = parseInt(destination.droppableId);
       const srcId = parseInt(source.droppableId);
-      if (destId === srcId) {
+      const destId = parseInt(destination.droppableId);
+      if (destination.droppableId === "newColumn") {
+        const sourceColumn = board.columns.find((c) => c.id === srcId)!;
+        const sourcePost = sourceColumn.posts.find(
+          (p) => p.position === source.index
+        )!;
+        const newColumn = {
+          name: "Untitled Column",
+          position: board.columns.length,
+          board: board.id,
+        } as IColumnSubmission;
+        const responseColumn = await createColumn(newColumn);
+        responseColumn.posts.push({
+          ...sourcePost,
+          column: responseColumn.id,
+          position: 0,
+        });
+        positionUpdate.push(getPositionUpdate(responseColumn.posts[0]));
+
+        const newSourcePosts = sourceColumn.posts
+          .filter((p) => p.position !== source.index)
+          .map((p) => {
+            if (p.position >= source.index) {
+              let newPost = { ...p, position: p.position - 1 };
+
+              positionUpdate.push(getPositionUpdate(newPost));
+              return newPost;
+            } else {
+              return p;
+            }
+          });
+        const newColumnList = board.columns.map((col) => {
+          if (col.id === srcId) {
+            return { ...sourceColumn, posts: newSourcePosts };
+          } else {
+            return col;
+          }
+        });
+        newColumnList.push(responseColumn);
+        setBoard({ ...board, columns: newColumnList });
+      } else if (destId === srcId) {
         if (destination.index !== source.index) {
           const column = board.columns.find((c) => c.id === destId)!;
           const oldIndex = source.index;
@@ -90,7 +138,6 @@ export default function KanbanBoard() {
             } else {
               newPost.position = post.position + 1;
             }
-            debugger;
             positionUpdate.push(getPositionUpdate(newPost));
             return newPost;
           });
@@ -191,142 +238,107 @@ export default function KanbanBoard() {
     });
   };
 
+  const handleColumnDelete = (id: number) => {
+    setBoard({
+      ...board,
+      columns: board.columns.filter((c) => c.id !== id),
+    });
+  };
+
   if (!board) return null;
 
   return (
     <>
-      <h1>{board.name}</h1>
+      <Typography variant="h4" sx={{ mb: 1 }}>
+        {board.name}
+      </Typography>
       <DragDropContext onDragEnd={onDragEnd}>
-        <Grid container spacing={2}>
-          {board.columns &&
-            board.columns.map((col) => {
-              return (
-                <Grid
-                  item
-                  sx={{
-                    width: 300,
-                  }}
-                  key={col.id}
-                >
-                  <KanbanColumn
-                    passedColumn={col}
-                    users={users}
-                    updateColumns={handleColumnUpdate}
-                  />
-                  {/* <Paper sx={{ backgroundColor: "green", p: 2 }}>
-                    <TextField
-                      sx={{ pb: 1 }}
-                      value={col.name}
-                      variant="standard"
-                    />
-                    <Button
-                      sx={{ width: "100%" }}
-                      variant="outlined"
-                      color="secondary"
-                      startIcon={<Add />}
-                      onClick={() => setColumn(col)}
+        <Box
+          sx={{
+            p: 1,
+            pb: 0,
+            backgroundColor: "grey.200",
+            borderRadius: 1,
+          }}
+        >
+          <Box
+            sx={{
+              pb: 2,
+              backgroundColor: "grey.200",
+              width: "calc(100vw - 64px)",
+              overflow: "auto",
+            }}
+          >
+            <Box
+              sx={{
+                display: "grid",
+                gridAutoFlow: "column",
+                gridGap: 8,
+              }}
+            >
+              {board.columns &&
+                board.columns.map((col) => {
+                  return (
+                    <Box
+                      sx={{
+                        width: 300,
+                      }}
+                      key={col.id}
                     >
-                      Add
-                    </Button>
-
-                    <Droppable type="FIELD" droppableId={col.id.toString()}>
-                      {(provided, _) => (
+                      <KanbanColumn
+                        passedColumn={col}
+                        users={users}
+                        updateColumnList={handleColumnUpdate}
+                        deleteFromColumnList={handleColumnDelete}
+                      />
+                    </Box>
+                  );
+                })}
+              <Box sx={{ width: 300 }}>
+                <ButtonBase
+                  sx={{
+                    width: 284,
+                  }}
+                >
+                  <Droppable type="FIELD" droppableId="newColumn">
+                    {(provided, snapshot) => (
+                      <Paper
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        sx={{
+                          backgroundColor: snapshot.isDraggingOver
+                            ? "LightCyan"
+                            : "white",
+                          p: 2,
+                          height: `calc(100vh - 188px)`,
+                          minHeight: 221.75,
+                          width: "100%",
+                          display: "grid",
+                          opacity: "50%",
+                          transition:
+                            "opacity 275ms cubic-bezier(0.4, 0, 0.2, 1) 0ms",
+                          "&:hover": {
+                            opacity: "90%",
+                          },
+                        }}
+                      >
                         <Box
-                          ref={provided.innerRef}
-                          {...provided.droppableProps}
                           sx={{
-                            minHeight: 100,
-                            pt: 1,
-                            height: `calc(100vh - 318px)`,
-                            overflow: "auto",
+                            justifySelf: "center",
+                            alignSelf: "center",
+                            display: "flex",
                           }}
                         >
-                          {col.posts.map((post, index) => {
-                            return (
-                              <Draggable
-                                key={post.id}
-                                draggableId={post.id.toString()}
-                                index={index}
-                              >
-                                {(provided, snapshot) => {
-                                  const savePostEdits = async (
-                                    postUpdate: IPost
-                                  ) => {
-                                    setLoading(true);
-                                    const responsePost = await updatePost(
-                                      postUpdate.id,
-                                      {
-                                        ...postUpdate,
-                                        assigned: postUpdate.assigned
-                                          ? postUpdate.assigned.id
-                                          : null,
-                                      }
-                                    );
-                                    const newPostList = col.posts.map((p) =>
-                                      p.id === responsePost.id
-                                        ? responsePost
-                                        : p
-                                    );
-                                    setBoard({
-                                      ...board,
-                                      columns: board.columns.map((c) => {
-                                        if (c.id === col.id) {
-                                          return {
-                                            ...col,
-                                            posts: newPostList,
-                                          };
-                                        }
-                                        return c;
-                                      }),
-                                    });
-                                    setLoading(false);
-                                  };
-
-                                  const handleDeletePost = async () => {
-                                    setLoading(true);
-                                    await deletePost(post.id);
-                                    const newPostList = col.posts.filter(
-                                      (p) => p.id !== post.id
-                                    );
-                                    setBoard({
-                                      ...board,
-                                      columns: board.columns.map((c) => {
-                                        if (c.id === col.id) {
-                                          return { ...col, posts: newPostList };
-                                        }
-                                        return c;
-                                      }),
-                                    });
-                                    setLoading(false);
-                                  };
-
-                                  return (
-                                    <div
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      ref={provided.innerRef}
-                                    >
-                                      <KanbanPost
-                                        post={post}
-                                        users={users}
-                                        savePostEdits={savePostEdits}
-                                        deletePost={handleDeletePost}
-                                      />
-                                    </div>
-                                  );
-                                }}
-                              </Draggable>
-                            );
-                          })}
-                          {provided.placeholder}
+                          <Add /> <Typography>New Column</Typography>
                         </Box>
-                      )}
-                    </Droppable>
-                  </Paper> */}
-                </Grid>
-              );
-            })}
-        </Grid>
+                      </Paper>
+                    )}
+                  </Droppable>
+                </ButtonBase>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
       </DragDropContext>
       {column && (
         <AddPostDialog column={column} users={users} savePost={addNewPost} />

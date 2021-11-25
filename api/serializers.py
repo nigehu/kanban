@@ -41,11 +41,16 @@ class PostPositionUpdateSerializer(serializers.Serializer):
     posts = PostPositionSerializer(many=True)
 
 class ColumnSerializer(serializers.ModelSerializer):
-    posts = PostSerializer(many=True)
+    posts = PostSerializer(many=True, read_only=True)
 
     class Meta:
         model = Column
         fields = '__all__'
+
+class ColumnActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Column
+        fields = ('id','name','position','board')
 
 class BoardSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

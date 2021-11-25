@@ -1,9 +1,9 @@
-import { Box, Button, Paper, TextField } from "@mui/material";
-import { Add } from "@mui/icons-material";
+import { Box, Button, IconButton, Paper, TextField } from "@mui/material";
+import { Add, Close } from "@mui/icons-material";
 import React, { useEffect, useState } from "react";
 import { updatePost, deletePost, createPost } from "../../api/post";
 import IPost, { IPostSubmission } from "../../interfaces/IPost";
-import IColumn from "../../interfaces/IColumn";
+import IColumn, { IColumnUpdate } from "../../interfaces/IColumn";
 import {
   DragDropContext,
   Draggable,
@@ -15,20 +15,24 @@ import KanbanPost from "./KanbanPost";
 import AddPostDialog from "./AddPostDialog";
 import IUser from "../../interfaces/IUser";
 import { useDebouncedCallback } from "use-debounce";
+import { updateColumn, deleteColumn } from "../../api/column";
 
 interface IKanbanColumn {
   passedColumn: IColumn;
   users: IUser[];
-  updateColumns: (column: IColumn) => void;
+  updateColumnList: (column: IColumn) => void;
+  deleteFromColumnList: (id: number) => void;
 }
 
 export default function KanbanColumn({
   passedColumn,
   users,
-  updateColumns,
+  updateColumnList,
+  deleteFromColumnList,
 }: IKanbanColumn) {
-  const [open, setOpen] = useState<boolean>(false);
+  const [addDialogOpen, setAddDialogOpen] = useState<boolean>(false);
   const [column, setColumn] = useState<IColumn | null>(null);
+  const [isHovering, setIsHovering] = useState<boolean>(false);
 
   useEffect(() => {
     if (passedColumn) {
@@ -38,8 +42,11 @@ export default function KanbanColumn({
 
   const debouncedChangeSearchString = useDebouncedCallback(
     async (s: string) => {
-      // send request
-      console.log("update column");
+      const columnUpdate = {
+        ...column,
+        posts: undefined,
+      } as IColumnUpdate;
+      updateColumn(column.id, columnUpdate);
     },
     600
   );
@@ -56,28 +63,51 @@ export default function KanbanColumn({
       position: p.position + 1,
     }));
     newPostList.unshift(responsePost);
-    updateColumns({ ...column, posts: newPostList });
+    updateColumnList({ ...column, posts: newPostList });
+  };
+
+  const handleDeleteColumn = () => {
+    deleteColumn(column!.id);
+    deleteFromColumnList(column!.id);
   };
 
   if (!column) return null;
 
   return (
-    <Paper sx={{ backgroundColor: "green", p: 2 }}>
-      <TextField
-        sx={{ pb: 1 }}
-        value={column.name}
-        onChange={(e) => handleChangeName(e.target.value)}
-        variant="standard"
-      />
-      <Button
-        sx={{ width: "100%" }}
-        variant="outlined"
-        color="secondary"
-        startIcon={<Add />}
-        onClick={() => setOpen(true)}
-      >
-        Add
-      </Button>
+    <Paper
+      sx={{ py: 2, pl: 2, pr: 0 }}
+      onMouseEnter={(e) => setIsHovering(true)}
+      onMouseLeave={(e) => setIsHovering(false)}
+    >
+      <Box sx={{ width: "100%", mb: 1, pr: 2 }}>
+        <TextField
+          sx={{ pb: 1 }}
+          value={column.name}
+          onChange={(e) => handleChangeName(e.target.value)}
+          variant="standard"
+          fullWidth
+          inputProps={{ style: { fontSize: 20, paddingRight: "24px" } }}
+        />
+        <Button
+          variant="outlined"
+          startIcon={<Add />}
+          onClick={() => setAddDialogOpen(true)}
+          fullWidth
+        >
+          Add Item
+        </Button>
+        <IconButton
+          sx={{
+            position: "absolute",
+            transform: "translate(-30px,-60px)",
+            opacity: isHovering ? "100%" : "0%",
+            transition: "opacity 375ms cubic-bezier(0.4, 0, 0.2, 1) 0ms",
+          }}
+          onClick={() => isHovering && handleDeleteColumn()}
+        >
+          <Close />
+        </IconButton>
+      </Box>
 
       <Droppable type="FIELD" droppableId={column.id.toString()}>
         {(provided, _) => (
@@ -86,8 +116,9 @@ export default function KanbanColumn({
             {...provided.droppableProps}
             sx={{
               minHeight: 100,
-              pt: 1,
-              height: `calc(100vh - 318px)`,
+              pr: "12px",
+              mr: "4px",
+              height: `calc(100vh - 310px)`,
               overflow: "auto",
             }}
           >
@@ -109,7 +140,7 @@ export default function KanbanColumn({
                       const newPostList = column.posts.map((p) =>
                         p.id === responsePost.id ? responsePost : p
                       );
-                      updateColumns({ ...column, posts: newPostList });
+                      updateColumnList({ ...column, posts: newPostList });
                     };
 
                     const handleDeletePost = async () => {
@@ -117,7 +148,7 @@ export default function KanbanColumn({
                       const newPostList = column.posts.filter(
                         (p) => p.id !== post.id
                       );
-                      updateColumns({ ...column, posts: newPostList });
+                      updateColumnList({ ...column, posts: newPostList });
                     };
 
                     return (
@@ -143,7 +174,7 @@ export default function KanbanColumn({
         )}
       </Droppable>
 
-      {open && (
+      {addDialogOpen && (
         <AddPostDialog column={column} users={users} savePost={addNewPost} />
       )}
     </Paper>

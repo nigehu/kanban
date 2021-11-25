@@ -38,6 +38,7 @@ export default function EditPostDialog({
 }: IAddPostDialog) {
   const [post, setPost] = useState<IPostEditing | null>(null);
   const [valid, setValid] = useState<boolean>(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState<boolean>(false);
 
   useEffect(() => {
     setPost({ ...passedPost, due_date: new Date(passedPost.due_date) });
@@ -131,16 +132,34 @@ export default function EditPostDialog({
         </Grid>
       </DialogContent>
       <DialogActions>
-        <Button color="error" onClick={deletePost}>
+        <Button
+          color="error"
+          onClick={() => setDeleteConfirmOpen(true)}
+          variant="outlined"
+        >
           Delete
         </Button>
-        <Button color="secondary" onClick={cancelPostEdits}>
+        <Button color="error" onClick={cancelPostEdits}>
           Cancel
         </Button>
         <Button disabled={!valid} onClick={handleSavePostClick}>
           Save
         </Button>
       </DialogActions>
+      <Dialog open={deleteConfirmOpen}>
+        <DialogTitle>Delete Post?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this post?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+          <Button color="error" onClick={deletePost}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }

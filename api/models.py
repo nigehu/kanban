@@ -17,6 +17,8 @@ class Column(models.Model):
     name = models.CharField(max_length=100, default="", unique=True)
     position = models.IntegerField(null=False, default=1)
     board = models.ForeignKey(Board, on_delete=models.CASCADE, default=0, related_name='columns')
+    class Meta:
+        ordering = ['position', 'pk']
 
 class Post(models.Model):
     title = models.CharField(max_length=100, default="")
