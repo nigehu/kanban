@@ -16,6 +16,7 @@ import AddPostDialog from "./AddPostDialog";
 import IUser from "../../interfaces/IUser";
 import { useDebouncedCallback } from "use-debounce";
 import { updateColumn, deleteColumn } from "../../api/column";
+import DeleteColumnDialog from "./DeleteColumnDialog";
 
 interface IKanbanColumn {
   passedColumn: IColumn;
@@ -31,6 +32,7 @@ export default function KanbanColumn({
   deleteFromColumnList,
 }: IKanbanColumn) {
   const [addDialogOpen, setAddDialogOpen] = useState<boolean>(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [column, setColumn] = useState<IColumn | null>(null);
   const [isHovering, setIsHovering] = useState<boolean>(false);
 
@@ -66,6 +68,14 @@ export default function KanbanColumn({
     updateColumnList({ ...column, posts: newPostList });
   };
 
+  const confirmEmptyColumn = () => {
+    if (column.posts.length > 0) {
+      setDeleteDialogOpen(true);
+    } else {
+      handleDeleteColumn();
+    }
+  };
+
   const handleDeleteColumn = () => {
     deleteColumn(column!.id);
     deleteFromColumnList(column!.id);
@@ -96,17 +106,19 @@ export default function KanbanColumn({
         >
           Add Item
         </Button>
-        <IconButton
-          sx={{
-            position: "absolute",
-            transform: "translate(-30px,-60px)",
-            opacity: isHovering ? "100%" : "0%",
-            transition: "opacity 375ms cubic-bezier(0.4, 0, 0.2, 1) 0ms",
-          }}
-          onClick={() => isHovering && handleDeleteColumn()}
-        >
-          <Close />
-        </IconButton>
+        <Box sx={{ position: "relative" }}>
+          <IconButton
+            sx={{
+              position: "absolute",
+              transform: "translate(240px,-95px)",
+              opacity: isHovering ? "100%" : "0%",
+              transition: "opacity 375ms cubic-bezier(0.4, 0, 0.2, 1) 0ms",
+            }}
+            onClick={() => isHovering && handleDeleteColumn()}
+          >
+            <Close />
+          </IconButton>
+        </Box>
       </Box>
 
       <Droppable type="FIELD" droppableId={column.id.toString()}>
@@ -175,7 +187,20 @@ export default function KanbanColumn({
       </Droppable>
 
       {addDialogOpen && (
-        <AddPostDialog column={column} users={users} savePost={addNewPost} />
+        <AddPostDialog
+          column={column}
+          users={users}
+          savePost={addNewPost}
+          handleCancel={() => setAddDialogOpen(false)}
+        />
+      )}
+
+      {deleteDialogOpen && (
+        <DeleteColumnDialog
+          column={column}
+          handleDeleteColumn={handleDeleteColumn}
+          handleCancel={() => setDeleteDialogOpen(false)}
+        />
       )}
     </Paper>
   );

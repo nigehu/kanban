@@ -274,6 +274,12 @@ export default function KanbanBoard() {
                 display: "grid",
                 gridAutoFlow: "column",
                 gridGap: 8,
+                // width: board.columns.length * 300,
+                // overflow: "auto",
+                // whiteSpace: "nowrap",
+                // "& > div": {
+                //   display: "inline-block",
+                // },
               }}
             >
               {board.columns &&
@@ -341,7 +347,12 @@ export default function KanbanBoard() {
         </Box>
       </DragDropContext>
       {column && (
-        <AddPostDialog column={column} users={users} savePost={addNewPost} />
+        <AddPostDialog
+          column={column}
+          users={users}
+          savePost={addNewPost}
+          handleCancel={() => setColumn(null)}
+        />
       )}
     </>
   );

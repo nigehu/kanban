@@ -16,19 +16,19 @@ export default async function fetchUrl<T = any>(
     const response = await fetch(`/api/${url}/`, options);
     // Handle no content
     if (response.status === 204) {
-      resolve(null);
+      return resolve(null);
     }
     try {
       const data: T = await response.json();
       if (response.ok) {
-        resolve(data);
+        return resolve(data);
       } else {
-        reject(data);
+        return reject(data);
       }
     } catch (err) {
       console.error(err);
       if (response.ok) {
-        reject(err);
+        return reject(err);
       }
     }
   });

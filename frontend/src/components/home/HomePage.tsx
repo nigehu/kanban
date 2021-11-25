@@ -59,7 +59,7 @@ export default function HomePage() {
         </TableHead>
         <TableBody>
           {boards.map((b) => (
-            <TableRow>
+            <TableRow key={b.id}>
               <TableCell>{b.name}</TableCell>
               <TableCell>
                 {b.user.first_name} {b.user.last_name}

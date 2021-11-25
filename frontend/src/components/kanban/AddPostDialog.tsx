@@ -25,12 +25,14 @@ interface IAddPostDialog {
   column: IColumn;
   users: IUser[];
   savePost: (post: IPostSubmission) => void;
+  handleCancel: () => void;
 }
 
 export default function AddPostDialog({
   column,
   users,
   savePost,
+  handleCancel,
 }: IAddPostDialog) {
   const [valid, setValid] = useState<boolean>(false);
   const [title, setTitle] = useState<string>("");
@@ -127,7 +129,7 @@ export default function AddPostDialog({
         </Grid>
       </DialogContent>
       <DialogActions>
-        <Button>Cancel</Button>
+        <Button onClick={handleCancel}>Cancel</Button>
         <Button disabled={!valid} onClick={handleAddPostClick}>
           Add Post
         </Button>
