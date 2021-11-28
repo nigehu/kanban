@@ -12,6 +12,7 @@ import {
 import React, { useEffect, useState } from "react";
 import IBoard from "../../interfaces/IBoard";
 import { useHistory } from "react-router-dom";
+import BoardTable from "./BoardTable";
 
 export default function HomePage() {
   const history = useHistory();
@@ -28,6 +29,8 @@ export default function HomePage() {
           const data: IBoard[] | undefined = await response.json();
           if (response.ok && data) {
             setBoards(data);
+            const myBoards = data.filter((b) => b.user.id === 1);
+            const otherBoards = data.filter((b) => b.user.id === 2);
             setLoading(false);
           } else {
             return Promise.reject(data);
@@ -50,11 +53,14 @@ export default function HomePage() {
 
   return (
     <>
-      <Typography variant="h3">Home Page</Typography>
-      <Table>
+      <BoardTable boards={boards} title="My Tables" />
+      <BoardTable boards={[]} title="Other Tables" />
+      {/* <Table>
         <TableHead>
           <TableRow>
             <TableCell>Name</TableCell>
+            <TableCell></TableCell>
+            <TableCell></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -72,7 +78,7 @@ export default function HomePage() {
             </TableRow>
           ))}
         </TableBody>
-      </Table>
+      </Table> */}
     </>
   );
 }

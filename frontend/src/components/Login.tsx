@@ -12,27 +12,29 @@ import {
 import React, { ChangeEvent, ReactNode, useEffect, useState } from "react";
 import { getUserBySession } from "../api/user";
 import IUser, { IUserSubmission } from "../interfaces/IUser";
+import { setMe } from "../store/meSlice";
+import { useAppSelector, useAppDispatch } from "../store/hooks";
 
 interface ILogin {
-  me: IUser;
-  setMe: (user: IUser) => void;
   children: ReactNode;
 }
 
-function Login({ me, setMe, children }: ILogin) {
+function Login({ children }: ILogin) {
   const [sessionUser, setSessionUser] = useState<IUser>();
   const [loading, setLoading] = useState(true);
   const [newUser, setNewUser] = useState(false);
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const me = useAppSelector((state) => state.me.value);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const fetchData = async () => {
       const sessionId = localStorage.getItem("session_id");
       if (sessionId) {
         const responseUser = await getUserBySession(sessionId);
-        setMe(responseUser);
+        dispatch(setMe(responseUser));
         setLoading(false);
       }
     };
@@ -50,7 +52,7 @@ function Login({ me, setMe, children }: ILogin) {
       try {
         const data: IUser | undefined = await response.json();
         if (response.ok && data) {
-          setMe(data);
+          dispatch(setMe(data));
           localStorage.setItem("session_id", data.session_id.toString());
           setLoading(false);
         } else {
@@ -88,7 +90,7 @@ function Login({ me, setMe, children }: ILogin) {
       try {
         const data: IUser | undefined = await response.json();
         if (response.ok && data) {
-          setMe(data);
+          dispatch(setMe(data));
           localStorage.setItem("session_id", data.session_id.toString());
           setLoading(false);
         } else {
@@ -110,7 +112,7 @@ function Login({ me, setMe, children }: ILogin) {
   };
 
   const confirmSessionUser = () => {
-    setMe(sessionUser);
+    dispatch(setMe(sessionUser));
     refuseSessionUser();
   };
 

@@ -10,6 +10,7 @@ import {
   TextField,
   Typography,
   Paper,
+  ButtonBase,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { Route, Switch, useHistory, useLocation } from "react-router-dom";
@@ -20,12 +21,13 @@ import Users from "./Users";
 import IUser from "../interfaces/IUser";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
+import { useAppSelector } from "../store/hooks";
 
 function App() {
   const location = useLocation();
   const history = useHistory();
   const [selectedTab, setSelectedTab] = useState("/");
-  const [me, setMe] = useState<IUser>();
+  const me = useAppSelector((state) => state.me.value);
 
   useEffect(() => {
     const path = location.pathname.replace(/[\d+\/]/g, "");
@@ -48,7 +50,13 @@ function App() {
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Box
         display="flex"
-        sx={{ height: 50, width: "100vw", backgroundColor: "red" }}
+        sx={{
+          height: 50,
+          width: "100vw",
+          borderBottomColor: "grey.200",
+          borderBottomWidth: 1,
+          borderBottomStyle: "solid",
+        }}
       >
         <Box flexGrow={1}>
           <Tabs
@@ -66,37 +74,46 @@ function App() {
           </Tabs>
         </Box>
         <Box>
-          <Typography sx={{ lineHeight: "50px", mr: 4 }}>
-            {me?.first_name} {me?.last_name}
-          </Typography>
+          <ButtonBase>
+            <Typography
+              sx={{
+                lineHeight: "50px",
+                mx: 3,
+                px: 3,
+                "&:hover": {
+                  backgroundColor: "green",
+                },
+              }}
+            >
+              {me?.first_name} {me?.last_name}
+            </Typography>
+          </ButtonBase>
         </Box>
       </Box>
-      <Login me={me} setMe={setMe}>
+      <Login>
         <Box
           sx={{
-            backgroundColor: "grey.200",
             height: "calc(100vh - 50px)",
-            py: 2,
-            px: 1,
+            p: 2,
             overflow: "auto",
           }}
         >
-          <Paper sx={{ p: 2 }}>
-            <Switch>
-              <Route exact path="/">
-                <HomePage />
-              </Route>
-              <Route path="/kanban/:id">
-                <KanbanBoard />
-              </Route>
-              <Route path="/users">
-                <Users />
-              </Route>
-              <Route path="*">
-                <h1>Yikes! No page found here...</h1>
-              </Route>
-            </Switch>
-          </Paper>
+          {/* <Paper sx={{ p: 2 }}> */}
+          <Switch>
+            <Route exact path="/">
+              <HomePage />
+            </Route>
+            <Route path="/kanban/:id">
+              <KanbanBoard />
+            </Route>
+            <Route path="/users">
+              <Users />
+            </Route>
+            <Route path="*">
+              <h1>Yikes! No page found here...</h1>
+            </Route>
+          </Switch>
+          {/* </Paper> */}
         </Box>
       </Login>
     </LocalizationProvider>
